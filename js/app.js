@@ -1,16 +1,22 @@
 "use strict";
 
 var React = require('react');
+var $ = require('jquery');
 
 var App = React.createClass({
 
   getInitialState: function() {
     return {
       count: 1,
-      item: '',
+      item: 'javascript',
       items: []
     }
   },
+
+  componentDidMount: function() {
+    this._doSearch();
+  },
+
 
   render: function() {
     return <div>
@@ -33,11 +39,7 @@ var App = React.createClass({
 
   _submitForm:function(e) {
     e.preventDefault();
-    this.setState({
-      items: this.state.items.concat(this.state.item),
-      item: ''
-    });
-
+    this._doSearch();
   },
 
   _onItemChange: function(e) {
@@ -52,12 +54,15 @@ var App = React.createClass({
     });
   },
 
-  _deleteItem: function(item) {
-    this.setState({
-      items: this.state.items.filter(function(i) {
-        return i !== item;
-      })
-    });
+  _doSearch: function() {
+    $.ajax({
+        method: 'GET',
+        url: '/github/search?language=' + this.state.item
+      }).then(function (response) {
+        this.setState({
+          items: response.items
+        });
+      }.bind(this));
   }
 });
 
@@ -79,6 +84,7 @@ var ItemsTable = React.createClass({
         <thead>
           <tr>
             <th>Name</th>
+            <th>Stars</th>
           </tr>
         </thead>
         <tbody>
@@ -97,10 +103,8 @@ var ItemRow = React.createClass({
   
   render: function() {
     return <tr>
-      <td>{this.props.item}</td>
-      <td>
-        <button type="button" className="btn btn-link" onClick={this._onDeleteClick}>Delete</button>
-      </td>
+      <td>{this.props.item.name}</td>
+      <td>{this.props.item.stargazers_count}</td>
     </tr>;
   },
 
