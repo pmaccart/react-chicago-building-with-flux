@@ -3,9 +3,12 @@
 var React = require('react');
 
 var App = React.createClass({
-   render: function() {
-    return <h2>Hello Slalom!</h2>;
+  
+  render: function() {
+    return <div>
+      <h2>Hello {this.props.name}!</h2>
+    </div>;
   }
 });
 
-React.render(<App />, document.getElementById('main'));
+React.render(<App name='World' />, document.getElementById('main'));
