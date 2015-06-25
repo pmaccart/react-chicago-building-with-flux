@@ -14,7 +14,14 @@ var App = React.createClass({
     return <div>
       <h2>Hello {this.props.name}!</h2>
       <h4>Count: {this.state.count}</h4>
+      <button type="button" className="btn btn-primary" onClick={this._incrementCount}>Increment Count</button>
     </div>;
+  },
+
+  _incrementCount: function() {
+    this.setState({
+      count: this.state.count + 1
+    });
   }
 });
 
