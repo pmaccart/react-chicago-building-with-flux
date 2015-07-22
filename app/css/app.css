@@ -1,0 +1,17 @@
+.message-list .message-list-item {
+  padding:5px;
+  border-bottom: 1px solid gray;
+}
+
+.message-list .message-list-item:last-child {
+  border-bottom:none;
+}
+
+.message-list-item-unread {
+  background-color: yellow;
+}
+
+.col-middle {
+  border-left: 1px solid gray;
+  border-right: 1px solid gray;
+}
