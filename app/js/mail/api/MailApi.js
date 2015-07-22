@@ -9,7 +9,7 @@ const MailApi = {
     let deferred = Q.defer();
     setTimeout(() => {
       deferred.resolve(folders);
-    }, 500);
+    }, 1);
 
     return deferred.promise;
   },
@@ -20,7 +20,7 @@ const MailApi = {
     setTimeout(() => {
       var message = _.find(messages, (m) => m.id === messageId);
       deferred.resolve(message);
-    }, 500);
+    }, 50);
 
     return deferred.promise;
   }
