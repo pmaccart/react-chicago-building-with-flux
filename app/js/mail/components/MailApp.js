@@ -1,5 +1,7 @@
 import React from 'react';
 
+import MailActionCreator from '../actions/MailActionCreator';
+
 // Store
 import MailStore from '../stores/MailStore';
 
@@ -18,11 +20,13 @@ class MailApp extends React.Component {
   }
 
   componentDidMount() {
-    MailStore.onChange(this._onChange);
+    MailStore.addChangeListener(this._onChange);
+
+    MailActionCreator.applicationStarted();
   }
 
   componentWillUnmount() {
-    MailStore.offChange(this._onChange);
+    MailStore.removeChangeListener(this._onChange);
   }
 
   render() {

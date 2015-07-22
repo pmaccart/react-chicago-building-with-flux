@@ -1,5 +1,6 @@
 import MailAppDispatcher from '../dispatcher/MailAppDispatcher';
 import { ActionTypes } from '../constants/MailConstants';
+import MailApi from '../api/MailApi';
 import { EventEmitter } from 'events';
 import assign from 'object-assign';
 import _ from 'lodash';
@@ -9,78 +10,109 @@ const EVENTS = {
   ERROR: 'ERROR'
 };
 
-const MailStore = assign({}, EventEmitter.prototype, {
 
-  init(folders = []) {
-    
-    this._folders = folders;
-    this._selectedFolder = null;
-    this._selectedMessage = null;
-  },
+var _folders = [];
+var _messages = [];
+var _messages = [];
+var _selectedFolder = null;
+var _selectedMessage = null;
+class MailStore extends EventEmitter {
+
+  constructor() {
+    super();
+    MailAppDispatcher.register((action) => {
+      switch (action.type) {
+        case ActionTypes.APP_STARTED: 
+          this._getFolders();
+        case ActionTypes.FOLDER_CHANGED:
+          this._setSelectedFolder(action.folderId);
+          break;
+        case ActionTypes.MESSAGE_SELECTED: 
+          this._setSelectedMessage(action.folderId, action.messageId);
+          break;
+        default:
+          // do nothing
+      }
+    })
+  }
 
   emitChange() {
     this.emit(EVENTS.CHANGE);
-  },
+  }
 
-  onChange(callback) {
+  emitError(err) {
+    this.emit(EVENTS.ERROR, err);
+  }
+
+  addChangeListener(callback) {
     this.addListener(EVENTS.CHANGE, callback);
-  },
+  }
 
-  offChange(callback) {
+  removeChangeListener(callback) {
     this.removeListener(EVENTS.CHANGE, callback);
-  },
+  }
 
   getFolders() {
-    return this._folders;
-  },
+    return _folders;
+  }
 
   getSelectedFolder() {
-    return this._selectedFolder;
-  },
+    return _selectedFolder;
+  }
 
   getSelectedMessage() {
-    return this._selectedMessage;
-  },
+    return _selectedMessage;
+  }
 
-  getMessage(folderId, messageId) {
-    return this._folders[folderId][messageId];
-  },
+  _getFolders() {
+    MailApi.getFolders().then((folders) => {
+      _folders = folders;
+      this.emitChange();
+    }, () => {
+      this.emitError('Error loading folders!');
+    });
+  }
 
-  _setSelectedFolder(folderId) {
-    this._selectedFolder = _.find(this._folders, (f) => { 
+  _getMessage(folderId, messageId) {
+    MailApi.getMessage(folderId, messageId).then((message) => {
+      _messages[messageId] = message;
+      this.emitChange();
+    }, () => {
+      this.emitError('Error getting message.');
+    })
+  }
+
+  _setSelectedFolder(folderId) {  
+    _selectedFolder = _.find(_folders, (f) => { 
       return (f.id == folderId);
     });
 
     this.emitChange();
-  },
+  }
 
   _setSelectedMessage(folderId, messageId) {
-    this._selectedFolder = _.find(this._folders, (f) => { 
-      return (f.id == folderId);
-    });
+    if (_messages[messageId]) {
+      _selectedMessage = _messages[messageId];
+      _selectedMessage.unread = false;
+    }
+    else {
+      MailApi.getMessage(folderId, messageId).then((message) => {
+        _messages[messageId] = message;
+        _selectedMessage = message
+        _selectedMessage.unread = false;
 
-    this._selectedMessage = _.find(this._selectedFolder.messages, (m) => {
-      return (m.id == messageId);
-    });
-    this._selectedMessage.unread = false;
+        this.emitChange();
+      });
+    }
 
+    // mark the folder message as read
+    let folder = _.find(_folders, (f) => f.id === folderId);
+    let folderMessage = _.find(folder.messages, (m) => m.id === messageId);
+    folderMessage.unread = false;
     this.emitChange();
-  },
-});
-
-
-MailAppDispatcher.register((action) => {
-  switch (action.type) {
-    case ActionTypes.FOLDER_CHANGED:
-      MailStore._setSelectedFolder(action.folderId);
-      break;
-    case ActionTypes.MESSAGE_SELECTED: 
-      MailStore._setSelectedMessage(action.folderId, action.messageId);
-      break;
-    default:
-      // do nothing
   }
-});
+};
 
-export default MailStore;
+
+export default new MailStore();
 
